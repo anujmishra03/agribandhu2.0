@@ -1,0 +1,8 @@
+{
+  "name": "@agribandhu/config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "description": "Shared configurations for AgriBandhu monorepo",
+  "license": "MIT"
+}

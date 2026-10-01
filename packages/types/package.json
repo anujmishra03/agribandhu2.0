@@ -1,0 +1,10 @@
+{
+  "name": "@agribandhu/types",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "src/index.ts",
+  "description": "Shared TypeScript definitions for AgriBandhu monorepo",
+  "license": "MIT"
+}

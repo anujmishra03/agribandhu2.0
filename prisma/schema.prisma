@@ -1,0 +1,226 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  phone          String
+  password       String
+  role           String          // "FARMER" | "ADMIN" | "OFFICER"
+  avatar         String?
+  emailVerified  DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  profile        Profile?
+  sessions       Session[]
+  farms          Farm[]
+  diseaseReports DiseaseReport[]
+  calendarEvents CalendarEvent[]
+}
+
+model Profile {
+  userId                  String   @id
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  state                   String
+  district                String
+  village                 String
+  preferredLanguage       String
+  farmSize                Float    // in acres
+  experience              Int      // in years
+  primaryCrop             String
+  secondaryCrop           String?
+  bio                     String?
+  
+  // Phase 3 Extended Profile fields
+  dob                     String?
+  gender                  String?
+  country                 String?  @default("India")
+  pinCode                 String?
+  farmerCategory          String?  // Small / Medium / Large
+  preferredUnits          String?  // Acres / Hectares
+  organicFarming          Boolean? @default(false)
+  irrigationMethod        String?
+  emergencyContactName    String?
+  emergencyContactRelation String?
+  emergencyContactPhone   String?
+}
+
+model Farm {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  farmType       String          // E.g. "Vegetable Farm", "Paddy Field", "Fruit Orchard"
+  area           Float
+  unit           String          // E.g. "Acres", "Hectares"
+  country        String          @default("India")
+  state          String
+  district       String
+  village        String
+  address        String
+  latitude       Float?
+  longitude      Float?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  crop           Crop?
+  soil           Soil?
+  activities     FarmActivity[]
+  images         FarmImage[]
+  diseaseReports DiseaseReport[]
+  calendarEvents CalendarEvent[]
+}
+
+model Crop {
+  id          String   @id @default(cuid())
+  farmId      String   @unique
+  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  cropName    String
+  variety     String
+  sowingDate  String
+  harvestDate String
+  growthStage String   // E.g. "Seedling", "Vegetative", "Flowering", "Maturity"
+}
+
+model Soil {
+  id            String   @id @default(cuid())
+  farmId        String   @unique
+  farm          Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  soilType      String   // E.g. "Clayey", "Loamy", "Sandy", "Black"
+  ph            Float
+  nitrogen      Float
+  phosphorus    Float
+  potassium     Float
+  organicCarbon Float
+}
+
+model FarmActivity {
+  id           String   @id @default(cuid())
+  farmId       String
+  farm         Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  activityDate String
+  createdAt    DateTime @default(now())
+}
+
+model FarmImage {
+  id         String   @id @default(cuid())
+  farmId     String
+  farm       Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  imageUrl   String
+  caption    String?
+  uploadedAt DateTime @default(now())
+}
+
+model DiseaseReport {
+  id            String             @id @default(cuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farmId        String
+  farm          Farm               @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  cropId        String?
+  imageUrl      String
+  thumbnailUrl  String
+  prediction    String             // E.g. "Tomato Late Blight (Phytophthora infestans)"
+  confidence    Float              // Percentage e.g. 98.4
+  severity      String             // "Low" | "Medium" | "High" | "Critical"
+  summary       String             // Farmer-friendly explanation
+  symptoms      String             // Visible & hidden symptoms
+  causes        String             // Infection causes
+  treatment     String             // Immediate actions & chemicals
+  organicRemedy String             // Neem oil, compost tea, organic fungicides
+  prevention    String             // Preventive measures
+  status        String             @default("COMPLETED") // "COMPLETED" | "FLAGGED_FOR_EXPERT"
+  createdAt     DateTime           @default(now())
+  history       DetectionHistory[]
+}
+
+model DetectionHistory {
+  id             String        @id @default(cuid())
+  reportId       String
+  report         DiseaseReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  processingTime Int           // In milliseconds
+  modelVersion   String        @default("AgriBandhu-Vision-v2.4")
+  createdAt      DateTime      @default(now())
+}
+
+model CalendarEvent {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farmId      String
+  farm        Farm              @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  cropId      String?
+  title       String
+  description String?
+  eventType   String            // "SEEDING" | "IRRIGATION" | "FERTILIZER" | "PESTICIDE" | "HERBICIDE" | "PRUNING" | "HARVEST" | "LAND_PREP" | "FIELD_CLEANING" | "SOIL_TEST" | "INSPECTION" | "AI_RECOMMENDATION" | "CUSTOM"
+  priority    String            @default("Medium") // "Low" | "Medium" | "High" | "Critical"
+  status      String            @default("Upcoming") // "Upcoming" | "Today" | "Completed" | "Missed" | "Cancelled" | "Delayed"
+  startDate   String
+  startTime   String?           @default("08:00")
+  endDate     String?
+  endTime     String?           @default("09:00")
+  recurrence  String            @default("NONE") // "NONE" | "DAILY" | "WEEKLY" | "EVERY_15_DAYS" | "MONTHLY" | "CUSTOM"
+  assignedTo  String?
+  notes       String?
+  completedAt DateTime?
+  createdBy   String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  reminders   EventReminder[]
+  attachments EventAttachment[]
+}
+
+model EventReminder {
+  id           String        @id @default(cuid())
+  eventId      String
+  event        CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  reminderType String        @default("SYSTEM") // "SYSTEM" | "SMS" | "WHATSAPP"
+  reminderTime String        // ISO or string date
+  sent         Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+}
+
+model EventAttachment {
+  id        String        @id @default(cuid())
+  eventId   String
+  event     CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  fileUrl   String
+  caption   String?
+  createdAt DateTime      @default(now())
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}

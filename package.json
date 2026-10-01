@@ -1,0 +1,26 @@
+{
+  "name": "agribandhu-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise-grade monorepo for AgriBandhu AI Platform",
+  "scripts": {
+    "dev": "pnpm --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.1",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "prisma": "^6.2.1"
+  },
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
