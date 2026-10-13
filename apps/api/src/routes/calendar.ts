@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth';
 import { ScheduleGeneratorService } from '../services/ai/scheduleGenerator';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const eventSchema = z.object({
   farmId: z.string().min(1, 'Farm is required.'),

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import multer from 'multer';
 import path from 'path';
@@ -9,7 +9,6 @@ import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth';
 import { DiseaseDetectionService } from '../services/ai/diseaseDetection';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Ensure upload directory exists safely in both local and serverless environments
 const uploadDir = process.env.VERCEL

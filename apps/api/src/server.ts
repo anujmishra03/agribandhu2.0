@@ -86,6 +86,22 @@ app.use('/api/farms', farmRoutes);
 app.use('/api/disease', diseaseRoutes);
 app.use('/api/calendar', calendarRoutes);
 
+app.get('/', (req, res) => {
+  res.json({
+    name: 'AgriBandhu AI API',
+    status: 'online',
+    message: 'Backend server is running successfully.',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      farms: '/api/farms',
+      disease: '/api/disease',
+      calendar: '/api/calendar',
+      profile: '/api/profile',
+    },
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date() });
 });
