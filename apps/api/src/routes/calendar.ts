@@ -112,7 +112,7 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res) => {
         recurrence: validated.recurrence,
         assignedTo: validated.assignedTo || null,
         notes: validated.notes || null,
-        createdBy: req.user.name,
+        createdBy: req.user.email,
       },
       include: {
         farm: { select: { name: true } },
