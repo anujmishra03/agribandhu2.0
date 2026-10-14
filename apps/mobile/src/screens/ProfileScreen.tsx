@@ -114,6 +114,12 @@ export const ProfileScreen: React.FC = () => {
         />
         <View style={styles.apiPresetRow}>
           <TouchableOpacity
+            style={[styles.presetPill, { backgroundColor: '#D1FAE5' }]}
+            onPress={() => setApiUrl('https://agribandhu-api.vercel.app/api')}
+          >
+            <Text style={[styles.presetText, { color: '#065F46', fontWeight: '700' }]}>☁️ Live Vercel API</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.presetPill}
             onPress={() => setApiUrl('http://localhost:5000/api')}
           >
@@ -124,12 +130,6 @@ export const ProfileScreen: React.FC = () => {
             onPress={() => setApiUrl('http://10.0.2.2:5000/api')}
           >
             <Text style={styles.presetText}>Android (10.0.2.2)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.presetPill}
-            onPress={() => setApiUrl('http://192.168.1.51:5000/api')}
-          >
-            <Text style={styles.presetText}>LAN IP (Phone)</Text>
           </TouchableOpacity>
         </View>
 

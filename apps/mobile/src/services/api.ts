@@ -1,6 +1,6 @@
 import { Farm, CalendarEvent, DiseaseDetectionResult, FarmerUser } from '../types';
 
-let API_BASE_URL = 'http://192.168.1.51:5000/api'; // Primary LAN IP for both phone & emulator
+let API_BASE_URL = 'https://agribandhu-api.vercel.app/api'; // Live 24/7 Vercel API
 let authToken: string | null = null;
 
 export const setApiBaseUrl = (url: string) => {
