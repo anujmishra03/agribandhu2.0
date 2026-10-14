@@ -1,16 +1,17 @@
 # dependencies
 node_modules/
 **/node_modules/
-/.pnpm-store
+.pnpm-store/
 
 # backups
 backup/*.jsonl
 
-# Next.js build output
-/.next/
-/out/
-/build/
-/dist/
+# Next.js & build output
+.next/
+out/
+build/
+dist/
+.vercel
 
 # debug logs
 npm-debug.log*
@@ -26,6 +27,7 @@ pnpm-debug.log*
 .env.test
 .env.production
 .env*.local
+!.env.example
 
 # system files
 .DS_Store

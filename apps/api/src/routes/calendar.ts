@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth';
 import { ScheduleGeneratorService } from '../services/ai/scheduleGenerator';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const eventSchema = z.object({
   farmId: z.string().min(1, 'Farm is required.'),
@@ -112,7 +111,7 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res) => {
         recurrence: validated.recurrence,
         assignedTo: validated.assignedTo || null,
         notes: validated.notes || null,
-        createdBy: req.user.name,
+        createdBy: req.user.email,
       },
       include: {
         farm: { select: { name: true } },

@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 const nextConfig: NextConfig = {
   transpilePackages: ['@agribandhu/ui', '@agribandhu/types'],
   reactStrictMode: true,
@@ -15,11 +17,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:5000/api/:path*',
+        destination: `${API_URL}/api/:path*`,
       },
       {
         source: '/uploads/:path*',
-        destination: 'http://localhost:5000/uploads/:path*',
+        destination: `${API_URL}/uploads/:path*`,
       },
     ];
   },
