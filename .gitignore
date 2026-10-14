@@ -1,6 +1,10 @@
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 /.pnpm-store
+
+# backups
+backup/*.jsonl
 
 # Next.js build output
 /.next/

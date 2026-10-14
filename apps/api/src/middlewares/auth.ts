@@ -12,7 +12,9 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const token = req.cookies?.auth_token;
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  const token = bearerToken || req.cookies?.auth_token;
 
   if (!token) {
     return res.status(401).json({ error: 'Unauthorized: Session token missing.' });

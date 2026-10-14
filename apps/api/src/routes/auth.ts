@@ -7,7 +7,7 @@ import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || 'agribandhu_secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'agribandhu-dev-super-secret-key-987654321';
 const SESSION_EXPIRY = '24h';
 
 // Helper to set HTTP-only cookie
@@ -95,6 +95,7 @@ router.post('/register', async (req, res) => {
     setAuthCookie(res, token);
 
     res.status(201).json({
+      token,
       id: user.id,
       name: user.name,
       email: user.email,
@@ -135,6 +136,7 @@ router.post('/login', async (req, res) => {
     setAuthCookie(res, token, validated.rememberMe);
 
     res.json({
+      token,
       id: user.id,
       name: user.name,
       email: user.email,
