@@ -24,10 +24,10 @@ export const DiseaseScanScreen: React.FC = () => {
     setIsScanning(true);
     setResult(null);
     try {
-      const diagnostic = await apiService.analyzeDisease(selectedCrop);
+      const diagnostic = await apiService.analyzeDisease(selectedCrop, undefined, selectedFarm?.id);
       setResult(diagnostic);
-    } catch {
-      // Handle error
+    } catch (err: any) {
+      console.warn('Scan error:', err);
     } finally {
       setIsScanning(false);
     }

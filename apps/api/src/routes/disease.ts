@@ -67,18 +67,31 @@ router.post('/analyze', authMiddleware, upload.single('image'), async (req: Auth
     if (!req.file) return res.status(400).json({ error: 'Please upload a crop leaf image for AI analysis.' });
 
     const farmId = req.body.farmId;
-    if (!farmId) {
-      return res.status(400).json({ error: 'Please select a farm for disease detection.' });
-    }
-
-    // Verify farm ownership
-    const farm = await prisma.farm.findUnique({
-      where: { id: farmId },
-      include: { crop: true },
-    });
-
-    if (!farm || farm.userId !== req.user.id) {
-      return res.status(404).json({ error: 'Selected farm not found or unauthorized.' });
+    let farm = null;
+    if (farmId) {
+      farm = await prisma.farm.findUnique({
+        where: { id: farmId },
+        include: { crop: true },
+      });
+      if (!farm || farm.userId !== req.user.id) {
+        return res.status(404).json({ error: 'Selected farm not found or unauthorized.' });
+      }
+    } else {
+      farm = await prisma.farm.findFirst({
+        where: { userId: req.user.id },
+        include: { crop: true },
+      });
+      if (!farm) {
+        farm = await prisma.farm.create({
+          data: {
+            userId: req.user.id,
+            name: 'Primary Farm',
+            area: 1.0,
+            location: 'Default Field',
+          },
+          include: { crop: true },
+        });
+      }
     }
 
     // Run AI Detection Pipeline Service

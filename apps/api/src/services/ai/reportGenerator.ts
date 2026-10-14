@@ -84,19 +84,86 @@ export class ReportGeneratorService {
   };
 
   public static generateReport(prediction: string): GeneratedReport {
-    // Default to healthy if not found
-    const key = this.DISEASE_LIBRARY[prediction] ? prediction : 'Healthy Crop Leaf';
-    const info = this.DISEASE_LIBRARY[key];
+    // 1. Direct match in dictionary
+    if (this.DISEASE_LIBRARY[prediction]) {
+      const info = this.DISEASE_LIBRARY[prediction];
+      return {
+        prediction,
+        severity: info.severity,
+        summary: info.summary,
+        symptoms: JSON.stringify(info.symptoms),
+        causes: info.causes,
+        treatment: info.treatment,
+        organicRemedy: info.organicRemedy,
+        prevention: info.prevention,
+      };
+    }
+
+    const lower = prediction.toLowerCase();
+    const isHealthy = lower.includes('healthy');
+
+    // Extract plant name from "Crop - Disease" or "Crop___Disease"
+    const parts = prediction.split(/-|___/);
+    const plantName = parts[0]?.trim() || 'Plant';
+    const conditionName = parts[1]?.trim() || (isHealthy ? 'Healthy' : 'Foliar Disorder');
+
+    if (isHealthy) {
+      return {
+        prediction,
+        severity: 'Low',
+        summary: `Your ${plantName} foliage exhibits healthy coloration, vigorous cellular structure, and no visible pathogen infections.`,
+        symptoms: JSON.stringify({
+          visible: ['Uniform chlorophyll distribution across leaf blade.', 'Absence of fungal pustules, necrotic spots, or vector damage.'],
+          hidden: ['Vigorous vascular transport and active transpiration.'],
+        }),
+        causes: 'Optimal microclimate, balanced fertilization, and good soil moisture levels.',
+        treatment: 'No chemical fungicides or insecticides required. Maintain standard irrigation and nutrient cycles.',
+        organicRemedy: 'Continue foliar seaweed extract or compost tea application every 14 days to bolster systemic resistance.',
+        prevention: 'Maintain routine crop scouting and inspect leaf undersides weekly for early insect or fungal onset.',
+      };
+    }
+
+    // Determine severity based on condition keywords
+    let severity: 'Low' | 'Medium' | 'High' | 'Critical' = 'Medium';
+    if (lower.includes('late blight') || lower.includes('virus') || lower.includes('greening') || lower.includes('rot')) {
+      severity = 'Critical';
+    } else if (lower.includes('early blight') || lower.includes('bacterial') || lower.includes('cercospora') || lower.includes('blast')) {
+      severity = 'High';
+    } else if (lower.includes('rust') || lower.includes('mold') || lower.includes('mildew') || lower.includes('scab') || lower.includes('spot')) {
+      severity = 'Medium';
+    }
+
+    // Determine targeted chemical & organic treatments
+    let treatment = 'Apply broad-spectrum protective fungicide (Mancozeb 75% WP @ 2.5 g/L or Copper Oxychloride 50% WP @ 3 g/L). For advanced fungal spread, spray systemic Azoxystrobin + Difenoconazole @ 1 ml/L.';
+    let organicRemedy = 'Foliar spray of cold-pressed Neem oil (5 ml/L water with mild soap emulsifier). Apply bio-agent Trichoderma viride or Bacillus subtilis @ 5 g/L at root zone and foliage.';
+    let prevention = 'Practice crop rotation with non-host crops. Ensure adequate spacing for canopy airflow. Implement drip irrigation to avoid wet foliage.';
+
+    if (lower.includes('bacterial')) {
+      treatment = 'Spray Streptocycline (1 g/10 L) mixed with Copper Oxychloride (2.5 g/L). Avoid handling plants when wet.';
+      organicRemedy = 'Copper hydroxide organic formulation. Apply biocontrol agent Pseudomonas fluorescens foliar spray.';
+    } else if (lower.includes('virus') || lower.includes('curl')) {
+      treatment = 'No chemical cure for plant viruses. Control insect vectors (whiteflies/aphids) using Imidacloprid 17.8% SL @ 0.5 ml/L or Thiamethoxam 25% WG @ 0.3 g/L.';
+      organicRemedy = 'Install yellow sticky traps (15-20 per acre). Spray 2% Neem oil solution weekly to deter sap-sucking vectors.';
+    } else if (lower.includes('mite')) {
+      treatment = 'Apply acaricide/miticide such as Spiromesifen 22.9% SC @ 1 ml/L or Propargite 57% EC @ 2 ml/L.';
+      organicRemedy = 'Spray wettable sulfur (2 g/L) or botanical insecticidal soap. Introduce predatory mites (Phytoseiidae).';
+    }
 
     return {
-      prediction: key,
-      severity: info.severity,
-      summary: info.summary,
-      symptoms: JSON.stringify(info.symptoms),
-      causes: info.causes,
-      treatment: info.treatment,
-      organicRemedy: info.organicRemedy,
-      prevention: info.prevention,
+      prediction,
+      severity,
+      summary: `${conditionName} identified on ${plantName}. This pathology impacts leaf photosynthesis and requires swift intervention to safeguard crop yield.`,
+      symptoms: JSON.stringify({
+        visible: [
+          `Visible ${conditionName.toLowerCase()} lesions and localized chlorosis on ${plantName} foliage.`,
+          'Premature yellowing and potential leaf margin curling or desiccation.'
+        ],
+        hidden: ['Reduced photosynthetic efficiency and compromised vascular translocation.'],
+      }),
+      causes: `Foliar pathogen proliferation favored by warm temperatures, elevated relative humidity, and moisture retention on leaves.`,
+      treatment,
+      organicRemedy,
+      prevention,
     };
   }
 }
