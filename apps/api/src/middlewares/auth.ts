@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'agribandhu-secret-key-12345';
+const JWT_SECRET = process.env.JWT_SECRET || 'agribandhu-dev-super-secret-key-987654321';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
