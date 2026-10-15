@@ -17,7 +17,6 @@ const step1Schema = z.object({
   email: z.string().email('Please enter a valid email address.'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
-  role: z.enum(['FARMER', 'OFFICER', 'ADMIN']),
 });
 
 // Step 2 schema
@@ -50,7 +49,6 @@ export default function RegisterPage() {
   } = useForm<RegisterFormData>({
     resolver: zodResolver(fullSchema),
     defaultValues: {
-      role: 'FARMER',
       farmSize: 0,
       experience: 0,
     },
@@ -58,7 +56,7 @@ export default function RegisterPage() {
 
   const handleNextStep = async () => {
     // Validate only Step 1 fields before transitioning
-    const fieldsToValidate = ['name', 'email', 'phone', 'password', 'role'] as any;
+    const fieldsToValidate = ['name', 'email', 'phone', 'password'] as any;
     const isValid = await trigger(fieldsToValidate);
     if (isValid) {
       setErrorMsg(null);
@@ -162,20 +160,6 @@ export default function RegisterPage() {
                       <Label htmlFor="password">Password (min 6 characters)</Label>
                       <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
                       {errors.password && <p className="text-xs font-semibold text-destructive">{errors.password.message}</p>}
-                    </div>
-
-                    {/* Role */}
-                    <div className="space-y-1.5">
-                      <Label htmlFor="role">Select Your Role</Label>
-                      <select
-                        id="role"
-                        className="flex h-11 w-full rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 transition-all duration-200"
-                        {...register('role')}
-                      >
-                        <option value="FARMER">Farmer</option>
-                        <option value="OFFICER">Agriculture Officer</option>
-                        <option value="ADMIN">System Admin</option>
-                      </select>
                     </div>
 
                     <div className="pt-4">

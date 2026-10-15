@@ -53,7 +53,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const officerItems: SidebarItem[] = [
     { label: 'Dashboard', href: '/dashboard/officer', icon: LayoutDashboard },
-    { label: 'Assigned Farmers', href: '/officer/farmers', icon: FolderHeart },
+    { label: 'Assigned Farmers', href: '/dashboard/officer', icon: FolderHeart },
     { label: 'Farm Planner', href: '/dashboard/planner', icon: CalendarRange },
     { label: 'AI Disease Diagnostics', href: '/dashboard/disease-detection', icon: ShieldAlert },
     { label: 'Profile', href: '/dashboard/profile', icon: User },
@@ -62,7 +62,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const adminItems: SidebarItem[] = [
     { label: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
-    { label: 'Manage Users', href: '/admin/users', icon: Landmark },
+    { label: 'Manage Users', href: '/dashboard/admin/users', icon: Landmark },
     { label: 'System Settings', href: '/dashboard/settings', icon: Settings },
   ];
 

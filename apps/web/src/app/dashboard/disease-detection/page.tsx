@@ -39,6 +39,7 @@ export default function DiseaseDetectionPage() {
   const [analyzing, setAnalyzing] = React.useState(false);
   const [scanStep, setScanStep] = React.useState(0);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [result, setResult] = React.useState<any | null>(null);
 
   // History states
   const [reports, setReports] = React.useState<ReportItem[]>([]);
@@ -81,7 +82,7 @@ export default function DiseaseDetectionPage() {
       }
     } catch (err) {
       console.error('Error loading reports history:', err);
-    } fontally: {
+    } finally {
       setLoadingHistory(false);
     }
   };
@@ -148,15 +149,31 @@ export default function DiseaseDetectionPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'AI Analysis failed.');
 
-      // Redirect to full report details page
-      router.push(`/dashboard/reports/${data.report.id}`);
+      // Show results on page instead of redirecting
+      setResult(data);
+      setAnalyzing(false);
+      setScanStep(0);
+      clearTimeout(stepTimer1);
+      clearTimeout(stepTimer2);
+      // Refresh history
+      fetchReports();
     } catch (err: any) {
       setErrorMsg(err.message || 'AI Analysis failed. Please try again.');
       setAnalyzing(false);
       setScanStep(0);
-    } finally {
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
+    }
+  };
+
+  const handleAnalyzeAgain = () => {
+    setResult(null);
+    setFile(null);
+    setPreviewUrl(null);
+    setErrorMsg(null);
+    setScanStep(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -330,9 +347,146 @@ export default function DiseaseDetectionPage() {
                 <Sparkles className="h-5 w-5" />
                 <span>{analyzing ? 'Analyzing Image...' : 'Run AI Disease Scanner'}</span>
               </Button>
+              {result && (
+                <Button
+                  type="button"
+                  onClick={handleAnalyzeAgain}
+                  disabled={analyzing}
+                  variant="outline"
+                  className="flex items-center justify-center gap-2 h-12 text-base"
+                >
+                  Analyze Another Image
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* Results Section */}
+        <AnimatePresence>
+          {result && result.report && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="space-y-6"
+            >
+              <Card className="border border-neutral-100 bg-white p-6 sm:p-8 shadow-sm">
+                <CardContent className="p-0 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <Heading level="h2" className="text-2xl font-extrabold text-neutral-900">Analysis Results</Heading>
+                    <Button
+                      type="button"
+                      onClick={handleAnalyzeAgain}
+                      variant="outline"
+                      size="sm"
+                      disabled={analyzing}
+                    >
+                      Analyze Another Image
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      {previewUrl && (
+                        <img
+                          src={previewUrl}
+                          alt="Analyzed plant leaf"
+                          className="w-full max-h-64 object-cover rounded-xl border border-neutral-100"
+                        />
+                      )}
+                      {result.report.imageUrl && !previewUrl && (
+                        <img
+                          src={result.report.imageUrl}
+                          alt="Analyzed plant leaf"
+                          className="w-full max-h-64 object-cover rounded-xl border border-neutral-100"
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1">Disease/Condition</div>
+                        <div className="text-lg font-extrabold text-neutral-900">{result.report.prediction}</div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        {result.report.confidence !== undefined && (
+                          <div>
+                            <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1">Confidence</div>
+                            <div className="text-base font-extrabold text-primary-700">{result.report.confidence}%</div>
+                          </div>
+                        )}
+                        {result.report.severity && (
+                          <div>
+                            <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1">Severity</div>
+                            <div className="text-base font-bold text-neutral-900">{result.report.severity}</div>
+                          </div>
+                        )}
+                      </div>
+                      {result.confidenceRating && (
+                        <div>
+                          <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1">Confidence Rating</div>
+                          <div className="text-sm font-semibold text-neutral-700">{result.confidenceRating}</div>
+                        </div>
+                      )}
+                      {result.warningMessage && (
+                        <div className="rounded-lg bg-accent-yellow-50 border border-accent-yellow-200 p-3 text-xs font-semibold text-accent-yellow-900">
+                          {result.warningMessage}
+                        </div>
+                      )}
+                      {result.processingTimeMs && (
+                        <div className="text-xs text-neutral-500">
+                          Processing time: {result.processingTimeMs}ms
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {result.report.summary && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Summary</div>
+                      <div className="text-sm font-semibold text-neutral-700 leading-relaxed">{result.report.summary}</div>
+                    </div>
+                  )}
+
+                  {result.report.symptoms && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Symptoms</div>
+                      <div className="text-sm font-semibold text-neutral-700 leading-relaxed whitespace-pre-wrap">{result.report.symptoms}</div>
+                    </div>
+                  )}
+
+                  {result.report.causes && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Causes</div>
+                      <div className="text-sm font-semibold text-neutral-700 leading-relaxed whitespace-pre-wrap">{result.report.causes}</div>
+                    </div>
+                  )}
+
+                  {result.report.treatment && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Treatment</div>
+                      <div className="text-sm font-semibold text-neutral-700 leading-relaxed whitespace-pre-wrap">{result.report.treatment}</div>
+                    </div>
+                  )}
+
+                  {result.report.organicRemedy && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Organic Remedy</div>
+                      <div className="text-sm font-semibold text-neutral-700 leading-relaxed whitespace-pre-wrap">{result.report.organicRemedy}</div>
+                    </div>
+                  )}
+
+                  {result.report.prevention && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Prevention</div>
+                      <div className="text-sm font-semibold text-neutral-700 leading-relaxed whitespace-pre-wrap">{result.report.prevention}</div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* History & Filter Section */}
         <div className="space-y-6 pt-4">

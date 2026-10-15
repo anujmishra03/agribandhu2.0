@@ -1,17 +1,21 @@
+// IMPORTANT: load environment variables before importing any module that reads
+// process.env at module initialization (routes/google.ts, middleware, prisma).
+// ES imports are hoisted, so this side-effect import MUST be first.
+import './lib/env';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import type { NextFunction, Request, Response } from 'express';
 import authRoutes from './routes/auth';
+import googleAuthRoutes from './routes/google';
 import profileRoutes from './routes/profile';
 import farmRoutes from './routes/farms';
 import diseaseRoutes from './routes/disease';
 import calendarRoutes from './routes/calendar';
-
-dotenv.config();
+import adminRoutes from './routes/admin';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -81,10 +85,12 @@ app.use((req, res, next) => {
 
 // Route Registrations
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', googleAuthRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/farms', farmRoutes);
 app.use('/api/disease', diseaseRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.json({
@@ -98,12 +104,37 @@ app.get('/', (req, res) => {
       disease: '/api/disease',
       calendar: '/api/calendar',
       profile: '/api/profile',
+      admin: '/api/admin',
     },
   });
 });
 
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date() });
+});
+
+// JSON 404 for unmatched API routes (keeps clients from receiving HTML).
+app.use('/api', (req: Request, res: Response) => {
+  res.status(404).json({ error: `Route ${req.method} ${req.originalUrl} not found.` });
+});
+
+// Global JSON error handler. Ensures every failure - including malformed JSON
+// bodies and unexpected errors - is returned as JSON rather than HTML/text.
+app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  if (err?.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'Invalid JSON in request body.' });
+  }
+
+  const status = Number(err?.status || err?.statusCode) || 500;
+  console.error('[API Error]', err instanceof Error ? err.message : err);
+
+  res.status(status).json({
+    error: status >= 500 ? 'Internal server error.' : err?.message || 'Request failed.',
+  });
 });
 
 if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {

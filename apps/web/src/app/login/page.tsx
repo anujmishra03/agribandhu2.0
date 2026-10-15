@@ -19,11 +19,52 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+const OAUTH_ERRORS: Record<string, string> = {
+  google_not_configured: 'Google sign-in is not configured on the server.',
+  oauth_state_mismatch: 'Google sign-in session expired. Please try again.',
+  oauth_token_exchange_failed: 'Could not verify your Google account. Please try again.',
+  oauth_invalid_token: 'Could not verify your Google account. Please try again.',
+  oauth_userinfo_failed: 'Could not read your Google profile. Please try again.',
+  oauth_email_unavailable: 'Your Google account has no verified email address.',
+  oauth_failed: 'Google sign-in failed. Please try again.',
+};
+
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.65l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38Z"
+      />
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+    if (error) {
+      setErrorMsg(OAUTH_ERRORS[error] || 'Sign in failed. Please try again.');
+    }
+  }, []);
 
   const {
     register,
@@ -153,6 +194,24 @@ export default function LoginPage() {
                   )}
                 </Button>
               </form>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-neutral-100" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-neutral-400 font-semibold tracking-wide">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <Button asChild variant="outline" className="w-full">
+                <a href="/api/auth/google" className="flex items-center justify-center gap-2">
+                  <GoogleIcon className="h-4 w-4" />
+                  <span>Continue with Google</span>
+                </a>
+              </Button>
 
               <div className="text-center text-xs sm:text-sm text-neutral-500 border-t border-neutral-100 pt-5">
                 Don't have an account?{' '}
