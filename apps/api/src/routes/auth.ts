@@ -4,9 +4,9 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth';
+import { getJwtSecret } from '../lib/env';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'agribandhu-dev-super-secret-key-987654321';
 const SESSION_EXPIRY = '24h';
 
 // Helper to set HTTP-only cookie
@@ -25,7 +25,6 @@ const registerSchema = z.object({
   email: z.string().email('Invalid email address.'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
-  role: z.enum(['FARMER', 'ADMIN', 'OFFICER']).default('FARMER'),
   state: z.string().min(2, 'State is required.'),
   district: z.string().min(2, 'District is required.'),
   village: z.string().min(2, 'Village is required.'),
@@ -65,7 +64,7 @@ router.post('/register', async (req, res) => {
           email: validated.email,
           phone: validated.phone,
           password: hashedPassword,
-          role: validated.role,
+          role: 'FARMER',
         },
       });
 
@@ -87,7 +86,7 @@ router.post('/register', async (req, res) => {
       return newUser;
     });
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, getJwtSecret(), {
       expiresIn: SESSION_EXPIRY,
     });
 
@@ -104,7 +103,7 @@ router.post('/register', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors[0].message });
     }
-    console.error('Register Error:', error);
+    console.error('Register Error:', error instanceof Error ? error.message : error);
     res.status(500).json({ error: 'Internal server error.' });
   }
 });
@@ -128,7 +127,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email or password.' });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, getJwtSecret(), {
       expiresIn: validated.rememberMe ? '7d' : SESSION_EXPIRY,
     });
 
@@ -146,7 +145,7 @@ router.post('/login', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors[0].message });
     }
-    console.error('Login Error:', error);
+    console.error('Login Error:', error instanceof Error ? error.message : error);
     res.status(500).json({ error: 'Internal server error.' });
   }
 });

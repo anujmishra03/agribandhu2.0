@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts",
     "build": "node -e \"const fs=require('fs'); if(fs.existsSync('../../prisma/dev.db')) fs.copyFileSync('../../prisma/dev.db', './dev.db');\" && prisma generate --schema=../../prisma/schema.prisma && tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed": "tsx src/seed.ts",
+    "test": "tsc -p tsconfig.json && node --test dist/__tests__/auth.middleware.test.js"
   },
   "dependencies": {
     "@agribandhu/types": "workspace:*",
@@ -16,6 +18,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "google-auth-library": "^9.15.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.2.0",
     "zod": "^3.24.1"

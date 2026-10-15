@@ -50,6 +50,51 @@ interface AuthContextType {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
+// Safely parse an API response. The API always returns JSON, but proxies and
+// infrastructure failures can return plain text or HTML. This prevents the
+// common `Unexpected token ... is not valid JSON` crash and surfaces a readable
+// error instead.
+async function parseJsonResponse(res: Response): Promise<any> {
+  const contentType = res.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    let data: any = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+    if (!res.ok) {
+      throw new Error((data && data.error) || `Request failed with status ${res.status}.`);
+    }
+    return data;
+  }
+
+  const text = (await res.text().catch(() => '')).trim();
+  if (!res.ok) {
+    const isPlainMessage = text.length > 0 && text.length < 200 && !text.startsWith('<');
+    throw new Error(
+      isPlainMessage
+        ? text
+        : `Server error (${res.status}). Please check that the API server is running.`
+    );
+  }
+  return text;
+}
+
+// Read a JSON body without throwing when the response is not JSON.
+async function safeJson(res: Response): Promise<any | null> {
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    return null;
+  }
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -59,8 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
-        const text = await res.text();
-        const data = text ? JSON.parse(text) : null;
+        const data = await safeJson(res);
         setUser(data);
       }
     } catch (error) {
@@ -74,8 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
-          const text = await res.text();
-          const data = text ? JSON.parse(text) : null;
+          const data = await safeJson(res);
           setUser(data);
         } else {
           setUser(null);
@@ -97,10 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password, rememberMe }),
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Login failed.');
-    }
+    const data = await parseJsonResponse(res);
     setUser(data);
   };
 
@@ -111,10 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify(formData),
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Registration failed.');
-    }
+    const data = await parseJsonResponse(res);
     setUser(data);
   };
 
@@ -136,11 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email }),
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Password reset request failed.');
-    }
-    return data;
+    return parseJsonResponse(res);
   };
 
   const resetPassword = async (token: string, password: string) => {
@@ -150,10 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ token, password }),
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Password reset failed.');
-    }
+    await parseJsonResponse(res);
   };
 
   return (
